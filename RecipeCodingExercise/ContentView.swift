@@ -15,6 +15,10 @@ struct ContentView: View {
 	@State private var error: Error?
 	@State private var isEmpty = false
 	
+	@Environment(\.modelContext) var modelContext
+	
+	let networkService = NetworkService()
+	
 //	@Query var recipes: [Recipe]
 	
     var body: some View {
@@ -44,15 +48,31 @@ struct ContentView: View {
 						} placeholder: {
 							Color.clear
 						}
-							.frame(width: 200, height: 200)
-							.clipShape(.rect(cornerRadius: 16))
+						.frame(width: 200, height: 200)
+						.clipShape(.rect(cornerRadius: 16))
+//							.task {
+//								Task {
+//									await networkService.loadImage(urlString: recipe.photo_url_small)
+//										.resizable()
+//										.scaledToFill()
+//								}
+//							}
+//						AsyncImage(url: URL(string: recipe.photo_url_small!)) { image in
+//							image
+//								.resizable()
+//								.scaledToFill()
+//						} placeholder: {
+//							Color.clear
+//						}
+//							.frame(width: 200, height: 200)
+//							.clipShape(.rect(cornerRadius: 16))
 					}
 				}
 			}
 		}
 		.task {
 			Task {
-				recipes = try await loadRecipes(source: segmentIndex)
+				recipes = try await networkService.loadRecipes(source: segmentIndex)
 			}
 		}
 		.refreshable {
@@ -60,7 +80,7 @@ struct ContentView: View {
 				do {
 					recipes = nil
 					error = nil
-					recipes = try await loadRecipes(source: segmentIndex)
+					recipes = try await networkService.loadRecipes(source: segmentIndex)
 				} catch {
 					self.error = error
 				}

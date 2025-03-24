@@ -6,6 +6,18 @@
 //
 
 import SwiftData
+import Foundation
+
+@Model
+class ImageCache {
+	@Attribute(.externalStorage) var imageData: Data
+	var photoUrl: String
+	
+	init(imageData: Data, url: String) {
+		self.imageData = imageData
+		self.photoUrl = url
+	}
+}
 
 @Model
 class Recipe {
