@@ -14,7 +14,7 @@ struct ContentView: View {
 	
 	@State private var error: Error?
 	@State private var isEmpty = false
-	
+	@Query var cachedImages: [CachedImage]
 	@Environment(\.modelContext) var modelContext
 	
 	let networkService = NetworkService()
@@ -41,31 +41,33 @@ struct ContentView: View {
 						Text(recipe.cuisine)
 							.font(.largeTitle)
 						Text(recipe.name)
-						AsyncImage(url: URL(string: recipe.photo_url_small!)) { image in
-							image
+						
+						if let cachedImage = cachedImages.first(where: { $0.photoUrl == recipe.photo_url_small }),
+						   let uiImage = UIImage(data: cachedImage.imageData) {
+							Image(uiImage: uiImage)
 								.resizable()
 								.scaledToFill()
-						} placeholder: {
-							Color.clear
+								.frame(width: 200, height: 200)
+								.clipShape(.rect(cornerRadius: 16))
+								.task {
+									print("loading image from cache ", cachedImage.photoUrl)
+								}
+						} else if let urlString = recipe.photo_url_small {
+							ProgressView()
+								.task {
+									print("loading image from network ", urlString)
+									if let imageData = await networkService.loadImage(urlString: urlString) {
+										modelContext.insert(CachedImage(imageData: imageData, url: urlString))
+									}
+								}
 						}
-						.frame(width: 200, height: 200)
-						.clipShape(.rect(cornerRadius: 16))
-//							.task {
-//								Task {
-//									await networkService.loadImage(urlString: recipe.photo_url_small)
-//										.resizable()
-//										.scaledToFill()
-//								}
-//							}
-//						AsyncImage(url: URL(string: recipe.photo_url_small!)) { image in
-//							image
-//								.resizable()
-//								.scaledToFill()
-//						} placeholder: {
-//							Color.clear
-//						}
-//							.frame(width: 200, height: 200)
-//							.clipShape(.rect(cornerRadius: 16))
+					}
+				}
+				Button("Purge image cache", systemImage: "trash") {
+					do {
+						try modelContext.delete(model: CachedImage.self)
+					} catch {
+						print("failed to delete image cache", error)
 					}
 				}
 			}

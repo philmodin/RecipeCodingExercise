@@ -16,8 +16,8 @@ import SwiftData
 
 class NetworkService {
 	
-	@Query var images: [ImageCache]
-	@Environment(\.modelContext) var modelContext
+	@Query var images: [CachedImage]
+//	@Environment(\.modelContext) var modelContext
 	
 	func loadRecipes(source: Int = 0) async throws -> [Response.Recipe] {
 		var urlSource: URL?
@@ -41,35 +41,18 @@ class NetworkService {
 		}
 	}
 	
-	func loadImage(urlString: String?) async -> Image {
-		print("load image for: ", urlString ?? "none")
-		guard let urlString, let url = URL(string: urlString) else {
-			return Image(systemName: "xmark.icloud")
-		}
-		
-		// Check for image in disk cache
-		let imagePackage = images.first(where: { $0.photoUrl == urlString })
-		if let imagePackage, let uiImage = UIImage(data: imagePackage.imageData) {
-			return Image(uiImage: uiImage)
-		}
-		
-		// Otherwise load from internet
+	func loadImage(urlString: String) async -> Data? {
+//		print("load image for: ", urlString ?? "none")
+		guard let url = URL(string: urlString) else { return nil }
+
 		do {
 			let (data, response) = try await URLSession.shared.data(from: url)
-//			print("response:\n", response)
-			// Save image to disk and return image
-			modelContext.insert(ImageCache(imageData: data, url: urlString))
-			if let uiImage = UIImage(data: data) {
-				return Image(uiImage: uiImage)
-			}
-			
+			return data
 		} catch {
 			print("error:\n", error.localizedDescription)
-			return Image(systemName: "xmark.icloud")
+			
 		}
-
-		// On failure return broken cloud
-		return Image(systemName: "xmark.icloud")
+		return nil
 	}
 }
 

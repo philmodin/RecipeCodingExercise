@@ -6,10 +6,11 @@
 //
 
 import SwiftData
+import SwiftUICore
 import Foundation
 
 @Model
-class ImageCache {
+class CachedImage {
 	@Attribute(.externalStorage) var imageData: Data
 	var photoUrl: String
 	

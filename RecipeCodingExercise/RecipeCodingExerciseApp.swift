@@ -15,6 +15,6 @@ struct RecipeCodingExerciseApp: App {
             ContentView()
         }
 //		.modelContainer(for: Recipe.self)
-		.modelContainer(for: ImageCache.self)
+		.modelContainer(for: CachedImage.self)
     }
 }
