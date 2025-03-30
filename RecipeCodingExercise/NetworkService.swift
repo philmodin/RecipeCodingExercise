@@ -5,20 +5,22 @@
 //  Created by Philip Modin on 1/18/25.
 //
 
+import Foundation
+import SwiftData
+
 enum Errors: Error {
 	case URLError
 }
 
-import Foundation
-import OSLog
-import SwiftUI
-import SwiftData
-
+@MainActor
 class NetworkService {
 	
-	@Query var images: [CachedImage]
-//	@Environment(\.modelContext) var modelContext
+	private let modelContext: ModelContext
 	
+	init(modelContext: ModelContext) {
+		self.modelContext = modelContext
+	}
+		
 	func loadRecipes(source: Int = 0) async throws -> [Response.Recipe] {
 		var urlSource: URL?
 		// Use a URL based on the selected tab.
@@ -31,28 +33,41 @@ class NetworkService {
 		guard let urlSource else { throw Errors.URLError }
 		
 		do {
-			let (data, response) = try await URLSession.shared.data(from: urlSource)
-//			print("response:\n", response)
-//			print("data:\n", String(decoding: data, as: UTF8.self))
+			let (data, _) = try await URLSession.shared.data(from: urlSource)
 			return try JSONDecoder().decode(Response.self, from: data).recipes
 		} catch {
-			Logger().error("\(error.localizedDescription)")
 			throw error
 		}
 	}
 	
-	func loadImage(urlString: String) async -> Data? {
-//		print("load image for: ", urlString ?? "none")
-		guard let url = URL(string: urlString) else { return nil }
+	func fetchImage(urlString: String) async -> Data? {
+		if let imageData = await checkCache(urlString: urlString) {
+			return imageData
+		} else {
+			await loadAndCacheImage(urlString: urlString)
+			return nil
+		}
+	}
+	
+	private func checkCache(urlString: String) async -> Data? {
+		do {
+			let cachedImages: [CachedImage] = try modelContext.fetch(FetchDescriptor<CachedImage>())
+			return cachedImages.first(where: { $0.photoUrl == urlString })?.imageData
+		} catch {
+			return nil
+		}
+	}
+	
+	private func loadAndCacheImage(urlString: String) async {
+		guard let url = URL(string: urlString) else { return }
 
 		do {
-			let (data, response) = try await URLSession.shared.data(from: url)
-			return data
+			let (data, _) = try await URLSession.shared.data(from: url)
+			modelContext.insert(CachedImage(imageData: data, url: urlString))
 		} catch {
 			print("error:\n", error.localizedDescription)
 			
 		}
-		return nil
 	}
 }
 

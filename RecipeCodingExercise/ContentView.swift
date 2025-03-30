@@ -17,10 +17,6 @@ struct ContentView: View {
 	@Query var cachedImages: [CachedImage]
 	@Environment(\.modelContext) var modelContext
 	
-	let networkService = NetworkService()
-	
-//	@Query var recipes: [Recipe]
-	
     var body: some View {
 		List {
 			// Segmented picker is for demonstrstion purposes only. Doesn't ship in production.
@@ -35,6 +31,7 @@ struct ContentView: View {
 				do {
 					print("pre  purge: ", cachedImages.count)
 					try modelContext.delete(model: CachedImage.self)
+					try modelContext.save()
 					print("post purge: ", cachedImages.count)
 				} catch {
 					print("failed to delete image cache", error)
@@ -65,11 +62,9 @@ struct ContentView: View {
 								}
 						} else if let urlString = recipe.photo_url_small {
 							ProgressView()
+								.frame(width: 200, height: 200)
 								.task {
-									print("loading image from network ", urlString)
-									if let imageData = await networkService.loadImage(urlString: urlString) {
-										modelContext.insert(CachedImage(imageData: imageData, url: urlString))
-									}
+									let _ = await NetworkService(modelContext: modelContext).fetchImage(urlString: urlString)
 								}
 						}
 					}
@@ -78,7 +73,7 @@ struct ContentView: View {
 		}
 		.task {
 			Task {
-				recipes = try await networkService.loadRecipes(source: segmentIndex)
+				recipes = try await NetworkService(modelContext: modelContext).loadRecipes(source: segmentIndex)
 			}
 		}
 		.refreshable {
@@ -86,7 +81,7 @@ struct ContentView: View {
 				do {
 					recipes = nil
 					error = nil
-					recipes = try await networkService.loadRecipes(source: segmentIndex)
+					recipes = try await NetworkService(modelContext: modelContext).loadRecipes(source: segmentIndex)
 				} catch {
 					self.error = error
 				}
