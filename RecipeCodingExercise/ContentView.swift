@@ -24,12 +24,23 @@ struct ContentView: View {
     var body: some View {
 		List {
 			// Segmented picker is for demonstrstion purposes only. Doesn't ship in production.
+			#if DEBUG
 			Picker("", selection: $segmentIndex) {
 				Text("Recipes").tag(0)
 				Text("Empty").tag(1)
 				Text("Malformed").tag(2)
 			}
 			.pickerStyle(.segmented)
+			Button("Purge image cache", systemImage: "trash") {
+				do {
+					print("pre  purge: ", cachedImages.count)
+					try modelContext.delete(model: CachedImage.self)
+					print("post purge: ", cachedImages.count)
+				} catch {
+					print("failed to delete image cache", error)
+				}
+			}
+			#endif
 			
 			if error != nil {
 				Text("Something went wrong, please try again later.")
@@ -61,13 +72,6 @@ struct ContentView: View {
 									}
 								}
 						}
-					}
-				}
-				Button("Purge image cache", systemImage: "trash") {
-					do {
-						try modelContext.delete(model: CachedImage.self)
-					} catch {
-						print("failed to delete image cache", error)
 					}
 				}
 			}
