@@ -19,7 +19,7 @@ struct ContentView: View {
 	
     var body: some View {
 		List {
-			// Segmented picker is for demonstrstion purposes only. Doesn't ship in production.
+			// Segmented picker and purge is for debug purposes only. Doesn't ship in release.
 			#if DEBUG
 			Picker("", selection: $segmentIndex) {
 				Text("Recipes").tag(0)
@@ -29,12 +29,9 @@ struct ContentView: View {
 			.pickerStyle(.segmented)
 			Button("Purge image cache", systemImage: "trash") {
 				do {
-					print("pre  purge: ", cachedImages.count)
 					try modelContext.delete(model: CachedImage.self)
 					try modelContext.save()
-					print("post purge: ", cachedImages.count)
 				} catch {
-					print("failed to delete image cache", error)
 				}
 			}
 			#endif
@@ -57,9 +54,6 @@ struct ContentView: View {
 								.scaledToFill()
 								.frame(width: 200, height: 200)
 								.clipShape(.rect(cornerRadius: 16))
-								.task {
-									print("loading image from cache ", cachedImage.photoUrl)
-								}
 						} else if let urlString = recipe.photo_url_small {
 							ProgressView()
 								.frame(width: 200, height: 200)

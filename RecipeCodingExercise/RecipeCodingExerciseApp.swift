@@ -14,7 +14,6 @@ struct RecipeCodingExerciseApp: App {
         WindowGroup {
             ContentView()
         }
-//		.modelContainer(for: Recipe.self)
 		.modelContainer(for: CachedImage.self)
     }
 }
