@@ -1,6 +1,6 @@
 # Recipe Coding Exercise
 
-### Summary: Include screen shots or a video of your app highlighting its features
+### Summary:
 In debug mode there are three tabs at the top to demonstrate loading, error, and empty states along with a button to purge the image cache. These elements are not included in Release mode for production environments.
 | Video Demo | Home Image | Empty State | Error State |
 |:-------:|:-------:|:-------:|:-------:|
